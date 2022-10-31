@@ -23,7 +23,7 @@ python occam.py
 
 There are still some issues with the code and test file given here, probably because of the parameters setting, but the framwork seems to be ok.
 Change the parameters and filename in 'occam.py' to create adversarial examples as you like.
-If you want attack other models or apis, customize the fitness function and pass this to attack function as a parameter.
+If you want to attack other models or apis, customize the fitness function and pass this to attack function as a parameter.
 ```python
 final_adv = occam.attack( x, x_init_adv, fitness_func )
 ```
