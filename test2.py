@@ -81,27 +81,15 @@ if (pred_text[0] == target_text):
 def distance(x, y):
     return np.sqrt(np.sum((x - y)**2))
 
-print(audio)
+
 N = 32000
 D = np.ones((N, 1)).T  
 m = np.zeros((N,1)).T
 C = np.diag(D[0]) 
-print(m[0])
-x = audio.copy()
-x_adv = adv_audio.copy()
-x_sub = x.copy()
-x_adv_sub = x_adv.copy()
-s = len(x_adv_sub)
-sigma = 0.01 * distance(x_sub, x_adv_sub)
-z_norm = np.random.randn(s, 1)
-print('random noise: ', z_norm)   #test codes
-cov = (sigma**2) * C
-print('cov: ', cov)
-cov_diag = np.diagonal(cov)
-print(cov_diag)
-cov_diag1_2 = np.sqrt(cov_diag)
-cov1_2 = np.diag(cov_diag1_2)
-print(cov1_2*cov1_2)
+print(audio)
+
+P = np.zeros((N))  
+print(P)
 
 
 #cov1_2 = fractional_matrix_power(cov, 0.5)

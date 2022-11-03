@@ -15,17 +15,18 @@ T = 30000
 l = 30
 c_c = 0.01
 c_cov = 0.001
+rescale = 0.005
 
 # Fitness function, should be customized according to the target model.
 model = Wav2Vec2ForCTC.from_pretrained(r'yongjian/wav2vec2-large-a') # Note: PyTorch Model
 processor = Wav2Vec2Processor.from_pretrained(r'yongjian/wav2vec2-large-a')
 sample_rate = processor.feature_extractor.sampling_rate
-target_text = 'THIS IS A TEST'
+target_text = 'THIS IS A TEST'  # Attack target
 def wav2vec_loss(x, x_adv):    
     with torch.no_grad():
         model_inputs = processor(x_adv, sampling_rate=sample_rate, return_tensors="pt", padding=True)
-        logits = model(model_inputs.input_values, attention_mask=model_inputs.attention_mask).logits # Use .cuda() for GPU acceleration
-        pred_ids = torch.argmax(logits, dim=-1).cpu()
+        outputs = model(model_inputs.input_values, attention_mask=model_inputs.attention_mask).logits.cuda() # Use .cuda() for GPU acceleration
+        pred_ids = torch.argmax(outputs, dim=-1).cpu()
         pred_text = processor.batch_decode(pred_ids)
     if (pred_text[0] == target_text):   # If the transcription is correct, return the l2 distance of the original audio
                                         # and the adversarial audio, else return the +inf(99999)
@@ -55,9 +56,10 @@ def wavwrite(wav_path,data):    # Write the audio into a file.
         fw.writeframes(data.tostring())
 
 class Occam():
-    def __init__(self, b = 15, T = 30000, l = 30,  c_c = 0.01, c_cov = 0.001):
+    def __init__(self, b = 15, T = 30000, l = 30,  c_c = 0.01, c_cov = 0.001 , rescale = 1):
         self.b = b              # binary search times
         self.T = T              # total time epoches
+        
         self.l = l             # lambda, sample times
         self.miu = 0.08         # distance from orignal input
         self.c_c = c_c          
@@ -69,7 +71,8 @@ class Occam():
         self.P = None           # the evolution path
         self.R = [0,0,0,0]      # R = {r1, r2, r3, r4}
         self.delta = [0,0,0]    # delta = {delta_m/2, delta_m, delta_2m}
-        self.m_base = 1
+        self.m_base = self.m 
+        self.rescale = rescale
 
     def bin_search(self, x, x_adv, loss):     # Binary search, roughly approaching the decision boundary.
         count_b = 1
@@ -127,8 +130,8 @@ class Occam():
                 break
         return final_stra
 
-    def pilot_test(self,fix_x, fix_x_adv, loss, strategy, current_best_fitness):    # Run a pilot test to update
-                                                                                    # the m size adaptively.
+    def pilot_test(self,fix_x, fix_x_adv, loss, strategy, c_b_f):    # Run a pilot test to update
+                                                                     # the m size adaptively.
         groups = self.decompose(strategy)
         x = fix_x.copy()
         x_adv = fix_x_adv.copy()
@@ -141,35 +144,47 @@ class Occam():
         C_sub = np.diag(C_sub_diag)
         P_sub = np.array([self.P[i] for i in group])
         s = len(group)
+        current_best_fitness = c_b_f
+
         for sub in range(self.l):
             sigma = 0.01 * self.distance(x_sub, x_adv_sub)
-            z_norm = np.random.randn(s, 1)
-            z_diag = self.diag_matrix_sqrt((sigma**2) * C_sub) * z_norm
-            z = np.diagonal(z_diag, offset=0, axis1=0, axis2=1)
-            x_adv_sub_tmp = x_adv_sub + self.miu*(x_sub - x_adv_sub) + z
+            z_norm = np.random.randn(s, 1)  # Random sample from a standard Gaussian distribution.
+                  
+            z_diag = self.diag_matrix_sqrt((sigma**2) * C_sub) * z_norm     # z = Cov_matrix**0.5 * z_norm   
+            z = np.diagonal(z_diag, offset=0, axis1=0, axis2=1)     # z ~ G(0, sigma**2 * Cov_matrix)        
+            z = z * self.rescale         #test codes
+        
+            x_adv_sub_tmp = x_adv_sub + self.miu*(x_sub - x_adv_sub) + z    # x* = x* + miu*(x - x*) + z
             solu = x_adv.copy()
+              
             for i, item in zip(group, x_adv_sub_tmp):
                 solu[i] = item
+                  
             current_fitness = loss(x, solu)
+                    
             if (current_fitness < current_best_fitness):
+                print('pilot test : got a better one!', current_fitness)   #test codes.
                 current_best_fitness = current_fitness
                 x_adv_sub = x_adv_sub_tmp.copy()
-                P_sub = (1-self.c_c) * P_sub + np.sqrt(self.c_c * (2 - self.c_c)) * z / sigma
+                P_sub = (1-self.c_c) * P_sub + np.sqrt(self.c_c * (2 - self.c_c)) * z / sigma   # Update the P_sub.
                 C_sub_update_count = 0
-                while (C_sub_update_count < s):
+                while (C_sub_update_count < s):     # Update the C_sub.
+                    i = C_sub_update_count
                     C_sub[i][i] = (1-self.c_cov)*C_sub[i][i] + self.c_cov*(P_sub[i]**2)
                     C_sub_update_count += 1
                 self.miu = 1.5 * self.miu
             else:
                 self.miu = 1.5**(-1/4) * self.miu
-        update_count = 0
-        while (update_count < s):
-            i = group[update_count]
-            x_adv[i] = x_adv_sub[update_count]
-            self.C[i][i] = C_sub[update_count][update_count]
-            self.P[i] = P_sub[update_count]
-            update_count += 1
-        return x_adv, current_best_fitness
+             
+            update_count = 0
+            while (update_count < s):   # Update the original C, P, and the adversarial example.
+                i = group[update_count]
+                x_adv[i] = x_adv_sub[update_count]
+                self.C[i][i] = C_sub[update_count][update_count]
+                self.P[i] = P_sub[update_count]
+                update_count += 1
+
+            return x_adv, current_best_fitness
 
     def diag_matrix_sqrt(self, cov):    # Easily calculate the square root of a matrix.
         cov_diag = np.diagonal(cov)
@@ -188,7 +203,7 @@ class Occam():
        
         x_adv = x_init_adv.copy()
      
-        self.P = np.zeros((self.N, 1))  
+        self.P = np.zeros((self.N))  
         t = 0
        
         last_best_fitness = self.distance(x, x_adv)
@@ -220,8 +235,9 @@ class Occam():
                     z_norm = np.random.randn(s, 1)  # Random sample from a standard Gaussian distribution.
                   
                     z_diag = self.diag_matrix_sqrt((sigma**2) * C_sub) * z_norm     # z = Cov_matrix**0.5 * z_norm   
-                    z = np.diagonal(z_diag, offset=0, axis1=0, axis2=1)     # z ~ G(0, sigma**2 * Cov_matrix)
-                    
+                    z = np.diagonal(z_diag, offset=0, axis1=0, axis2=1)     # z ~ G(0, sigma**2 * Cov_matrix)        
+                    z = z * self.rescale         #test codes
+        
                     x_adv_sub_tmp = x_adv_sub + self.miu*(x_sub - x_adv_sub) + z    # x* = x* + miu*(x - x*) + z
                     solu = x_adv.copy()
               
@@ -231,12 +247,13 @@ class Occam():
                     current_fitness = loss(x, solu)
                     
                     if (current_fitness < current_best_fitness):
-                        print('got a better one!')   #test codes.
+                        
                         current_best_fitness = current_fitness
                         x_adv_sub = x_adv_sub_tmp.copy()
                         P_sub = (1-self.c_c) * P_sub + np.sqrt(self.c_c * (2 - self.c_c)) * z / sigma   # Update the P_sub.
                         C_sub_update_count = 0
                         while (C_sub_update_count < s):     # Update the C_sub.
+                            i = C_sub_update_count
                             C_sub[i][i] = (1-self.c_cov)*C_sub[i][i] + self.c_cov*(P_sub[i]**2)
                             C_sub_update_count += 1
                         self.miu = 1.5 * self.miu
@@ -275,13 +292,16 @@ class Occam():
                 self.delta[2] = abs((last_best_fitness - current_best_fitness) / last_best_fitness)
                 last_best_fitness = current_best_fitness
                 t += self.l
-            print('current delta:', self.delta)
-            if (self.delta[0] >= self.delta[1] and self.delta[0] >= self.delta[2]):
+            print('current delta:', self.delta, '   current m: ', self.m_base)
+
+            if (self.delta[0] == self.delta[1] and self.delta[0] == self.delta[2]):
+                pass
+            elif (self.delta[0] >= self.delta[1] and self.delta[0] >= self.delta[2]):
                 self.m_base = self.m_base/2
                 self.delta[2] = self.delta[1]
                 self.delta[1] = self.delta[0]
                 self.delta[0] = 0
-            if (self.delta[2] >= self.delta[0] and self.delta[2] >= self.delta[1]):
+            elif (self.delta[2] >= self.delta[0] and self.delta[2] >= self.delta[1]):
                 self.m_base = self.m_base*2
                 self.delta[0] = self.delta[1]
                 self.delta[1] = self.delta[2]
@@ -292,7 +312,7 @@ class Occam():
 
 
 def main():
-    occam = Occam(b , T, l ,  c_c , c_cov)
+    occam = Occam(b , T, l ,  c_c , c_cov , rescale)
     x = wavread('ori.wav')
     x_init_adv = wavread('init_adv.wav')
     print(wav2vec_loss(x, x_init_adv))
@@ -300,7 +320,6 @@ def main():
     wavwrite('final_adv.wav', final_adv)
 
 main()    
-
 
 
 
