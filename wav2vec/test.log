@@ -1,0 +1,77 @@
+nohup: 忽略输入
+./test.py:72: FutureWarning: Pass orig_sr=16000, target_sr=16000 as keyword args. From version 0.10 passing these as positional arguments will result in an error
+  new_signal = librosa.resample(signal, sr, new_sample_rate)
+./wav2vec/ori.wav
+./wav2vec/init_adv.wav
+./test.py:53: DeprecationWarning: The binary mode of fromstring is deprecated, as it behaves surprisingly on unicode inputs. Use frombuffer instead
+  data = np.fromstring(strdata, dtype=np.int16)
+start initialization!
+current time:  0    bin search, get loss:  41.00904233966668
+current time:  48    sampled a better noise, loss:  40.8884948971168
+current time:  75    sampled a better noise, loss:  40.613716306549115
+current time:  76    sampled a better noise, loss:  40.26951368086958
+current time:  80    sampled a better noise, loss:  39.97420058070039
+current time:  109    sampled a better noise, loss:  39.80319128435235
+current time:  165    sampled a better noise, loss:  39.72773800083019
+current time:  166    sampled a better noise, loss:  39.63373785467757
+current time:  272    sampled a better noise, loss:  39.58448623023122
+current time:  289    sampled a better noise, loss:  39.44280650174163
+current time:  367    sampled a better noise, loss:  39.42440555876589
+current time:  387    sampled a better noise, loss:  39.378433554821925
+current time:  447    sampled a better noise, loss:  39.32445651843694
+current time:  480    sampled a better noise, loss:  39.27650106569023
+pilot test get a better loss:  39.26230785353058
+current delta: [0.0003613665111338639, 0.675964587371255, 0]    current m:  16
+current time:  525       current loss:  39.26230785353058
+current time:  525    bin search, get loss:  39.26230785353058
+current time:  583    sampled a better noise, loss:  39.219393422165275
+current time:  681    sampled a better noise, loss:  39.20622270812075
+current time:  803    sampled a better noise, loss:  39.18769896547736
+current time:  813    sampled a better noise, loss:  39.042048376548394
+current time:  867    sampled a better noise, loss:  39.02951029889243
+current time:  949    sampled a better noise, loss:  39.00157366095344
+pilot test get a better loss:  38.95907866320028
+current delta: [0.0003613665111338639, 0.10625323138917557, 0.0010895713624936036]    current m:  16
+current time:  1050       current loss:  38.95907866320028
+current time:  1050    bin search, get loss:  38.833051370161364
+current time:  1076    sampled a better noise, loss:  38.78596446762066
+current time:  1135    sampled a better noise, loss:  38.719261056263406
+current time:  1181    sampled a better noise, loss:  38.70631691880162
+current time:  1198    sampled a better noise, loss:  38.65526920376342
+current time:  1269    sampled a better noise, loss:  38.64013696585704
+current time:  1409    sampled a better noise, loss:  38.594387969305515
+current time:  1482    sampled a better noise, loss:  38.580032102094854
+current delta: [0.0003613665111338639, 0.10424903905889821, 0.0010895713624936036]    current m:  16
+current time:  1545       current loss:  38.580032102094854
+current time:  1545    bin search, get loss:  38.580032102094854
+current time:  1632    sampled a better noise, loss:  38.50055137722785
+current time:  1907    sampled a better noise, loss:  38.47788336642762
+current delta: [0.0003613665111338639, 0.04236335953144578, 0.0010895713624936036]    current m:  16
+current time:  2040       current loss:  38.47788336642762
+current time:  2040    bin search, get loss:  38.47788336642762
+current time:  2111    sampled a better noise, loss:  38.463988248842305
+current time:  2164    sampled a better noise, loss:  38.43779963265583
+current delta: [0.0003613665111338639, 0.016667749996564906, 0.0010895713624936036]    current m:  16
+current time:  2535       current loss:  38.43779963265583
+current time:  2535    bin search, get loss:  38.43779963265583
+current time:  2628    sampled a better noise, loss:  38.4065629018464
+current delta: [0.0003613665111338639, 0.013002505287173356, 0.0010895713624936036]    current m:  16
+current time:  3030       current loss:  38.4065629018464
+current time:  3030    bin search, get loss:  38.404218751278655
+current time:  3083    sampled a better noise, loss:  38.340176671688724
+current delta: [0.0003613665111338639, 0.026681268536540424, 0.0010895713624936036]    current m:  16
+current time:  3525       current loss:  38.340176671688724
+current time:  3525    bin search, get loss:  38.33783657301492
+current delta: [0.0003613665111338639, 0.0, 0.0010895713624936036]    current m:  16
+current time:  4020       current loss:  38.33783657301492
+current time:  4020    bin search, get loss:  38.33783657301492
+current time:  4084    sampled a better noise, loss:  38.328113929579025
+current time:  4211    sampled a better noise, loss:  38.32306184055504
+current time:  4548    sampled a better noise, loss:  38.25729815169132
+current time:  4596    sampled a better noise, loss:  38.24579660348912
+current time:  4809    sampled a better noise, loss:  38.236943472666646
+current time:  4938    sampled a better noise, loss:  38.108132415834106
+pilot test get a better loss:  38.09727829449215
+current delta: [0.0002848242790677176, 0.19173051186096027, 0]    current m:  32
+current time:  5025       current loss:  38.09727829449215
+current time:  5025    bin search, get loss:  38.09727829449215

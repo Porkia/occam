@@ -18,13 +18,15 @@ conda install -c conda-forge transformers
 
 After installation, just run the attack file.
 ```
-python occam.py
+python occam_wav2vec.py
 ```
 
-There are still some issues with the code and test file given here, probably because of the parameters setting, but the framwork seems to be ok.
+There are still some issues with the code and test file given here, probably because of the parameters setting, and the great differences between the audios, but the framwork seems to be ok.
 Change the parameters and filename in 'occam.py' to create adversarial examples as you like.
 If you want to attack other models or apis, customize the fitness function and pass this to attack function as a parameter.
 ```python
 final_adv = occam.attack( x, x_init_adv, fitness_func )
 ```
 The fitness function should take original input and adversarial input as parameters, and return a fitness value.
+
+PS: The occam_ali.py is an attack file aiming at aliyun ASR api, if you want to run this file, you need to register the relevant account and get your own api, then change the appkey and app secrest in aliyun_function.py to enable your access to your api.
